@@ -8,7 +8,7 @@ import time
 import base64
 import speech_recognition as sr
 import re
-import pywhatkit
+
 import threading
 from twilio.rest import Client
 
@@ -21,15 +21,19 @@ TWILIO_PHONE_NUMBER = "your_twilio_phone_number_here"
 # ----------------------------------
 
 def send_whatsapp_msg(phone_no):
+    """Sends a WhatsApp message via Twilio (works on cloud servers)"""
+    if "your_" in TWILIO_SID or "your_" in TWILIO_AUTH_TOKEN or "your_" in TWILIO_PHONE_NUMBER:
+        print("WhatsApp NOT SENT: Please configure your Twilio credentials in app.py")
+        return
+
     try:
-        # Send instant message
-        pywhatkit.sendwhatmsg_instantly(
-            phone_no=phone_no, 
-            message="your appointment is fixed", 
-            wait_time=15, 
-            tab_close=True, 
-            close_time=3
+        client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
+        message = client.messages.create(
+            body="Your appointment at Smile Bright Dental Clinic is fixed.",
+            from_=f"whatsapp:{TWILIO_PHONE_NUMBER}",
+            to=f"whatsapp:{phone_no}"
         )
+        print(f"WhatsApp Sent successfully via Twilio! Message SID: {message.sid}")
     except Exception as e:
         print(f"Failed to send WhatsApp message to {phone_no}: {e}")
 
