@@ -15,9 +15,14 @@ from twilio.rest import Client
 # --- NOTIFICATION CONFIGURATION ---
 # 1. WhatsApp is handled via WhatsApp Web (make sure you're logged in)
 # 2. SMS is handled via Twilio (requires Account SID, Auth Token and a Twilio phone number)
-TWILIO_SID = "your_account_sid_here"
-TWILIO_AUTH_TOKEN = "your_auth_token_here"
-TWILIO_PHONE_NUMBER = "your_twilio_phone_number_here"
+try:
+    TWILIO_SID = st.secrets["TWILIO_SID"]
+    TWILIO_AUTH_TOKEN = st.secrets["TWILIO_AUTH_TOKEN"]
+    TWILIO_PHONE_NUMBER = st.secrets["TWILIO_PHONE_NUMBER"]
+except Exception:
+    TWILIO_SID = "AC53d01c82f98240a0712975e3a838143d"
+    TWILIO_AUTH_TOKEN = "a56b0112b178cb3d3067bfa3c6532cae"
+    TWILIO_PHONE_NUMBER = "+14155238886"
 # ----------------------------------
 
 def send_whatsapp_msg(phone_no):
@@ -27,10 +32,13 @@ def send_whatsapp_msg(phone_no):
         return
 
     try:
+        from_number = TWILIO_PHONE_NUMBER.replace("whatsapp:", "").strip()
+        # For Twilio WhatsApp sandbox, you must use their predefined templates (content_sid)
         client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
         message = client.messages.create(
-            body="Your appointment at Smile Bright Dental Clinic is fixed.",
-            from_=f"whatsapp:{TWILIO_PHONE_NUMBER}",
+            from_=f"whatsapp:{from_number}",
+            content_sid='HXb5b62575e6e4ff6129ad7c8efe1f983e',
+            content_variables='{"1":"12/1","2":"3pm"}',
             to=f"whatsapp:{phone_no}"
         )
         print(f"WhatsApp Sent successfully via Twilio! Message SID: {message.sid}")
@@ -44,10 +52,11 @@ def send_sms_msg(phone_no):
         return
 
     try:
+        from_number = TWILIO_PHONE_NUMBER.replace("whatsapp:", "").strip()
         client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
         message = client.messages.create(
             body="Your appointment at Smile Bright Dental Clinic is fixed.",
-            from_=TWILIO_PHONE_NUMBER,
+            from_=from_number,
             to=phone_no
         )
         print(f"SMS Sent successfully! Message SID: {message.sid}")
@@ -242,7 +251,10 @@ with col2:
                 digits = re.sub(r'\D', '', user_transcript)
                 if len(digits) == 10:
                     # Format appropriately
-                    st.session_state.patient_phone = f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+                    part1 = digits[0] + digits[1] + digits[2]
+                    part2 = digits[3] + digits[4] + digits[5]
+                    part3 = digits[6] + digits[7] + digits[8] + digits[9]
+                    st.session_state.patient_phone = f"({part1}) {part2}-{part3}"
                 else:
                     st.session_state.patient_phone = "Invalid or Missing"
                 
